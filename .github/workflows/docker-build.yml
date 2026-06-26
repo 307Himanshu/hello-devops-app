@@ -20,9 +20,22 @@ jobs:
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Build Docker Image
-        run: |
-          docker build -t himanshu307dev/hello-devops:latest .
+        run: docker build -t himanshu307dev/hello-devops:latest .
 
       - name: Push Docker Image
-        run: |
-          docker push himanshu307dev/hello-devops:latest
+        run: docker push himanshu307dev/hello-devops:latest
+
+      - name: Deploy to EC2
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USERNAME }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            sudo docker pull himanshu307dev/hello-devops:latest
+            sudo docker stop hello-devops || true
+            sudo docker rm hello-devops || true
+            sudo docker run -d \
+              --name hello-devops \
+              -p 80:3000 \
+              himanshu307dev/hello-devops:latest
